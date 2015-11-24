@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
  * localCache
  */
 public class LocalCache<K, V> {
+    //the max size of cache
+    private int MAX_SIZE = 10000;
     private Map<K, ValueEntry<V>> cache;
 
     public LocalCache() {
@@ -23,12 +25,29 @@ public class LocalCache<K, V> {
         cache = new HashMap<>(initialCapacity);
     }
 
-    public LocalCache(int initialCapacity, int loadFactor) {
+    public LocalCache(int initialCapacity, int loadFactor, int size) {
         cache = new HashMap<>(initialCapacity, loadFactor);
+        MAX_SIZE = size;
     }
 
     /**
+     * Sets the max size of cache
+     */
+    public void setMaxSize(int size) {
+        this.MAX_SIZE = size;
+    }
+
+    /**
+     * Gets the max size of cache
+     */
+    public int setMaxSize() {
+        return this.MAX_SIZE;
+    }
+
+
+    /**
      * Get size of cache
+     *
      * @return the number of key-value mappings in  cache
      */
     public int size() {
@@ -56,6 +75,10 @@ public class LocalCache<K, V> {
      * @return if cache exists key then return old value, else return null
      */
     public V setValue(K key, V value) {
+        //check if cache more than MAX_SIZE
+        if (cache.size() >= MAX_SIZE) {
+            return null;
+        }
         ValueEntry<V> valueEntry = new ValueEntry<>();
         valueEntry.setValue(value);
         ValueEntry<V> oldValueEntry = cache.put(key, valueEntry);
@@ -70,6 +93,10 @@ public class LocalCache<K, V> {
      * @return if cache exists key then return old value, else return null
      */
     public V setValue(K key, V value, Date expiredDate) {
+        //check if cache more than MAX_SIZE
+        if (cache.size() >= MAX_SIZE) {
+            return null;
+        }
         ValueEntry<V> valueEntry = new ValueEntry<>();
         valueEntry.setExpiredTime(expiredDate.getTime() / 1000);
         valueEntry.setValue(value);
