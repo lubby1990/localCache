@@ -1,7 +1,10 @@
 package com.lubby.cache;
 
+import com.google.gson.Gson;
 import com.lubby.exception.LocalException;
 
+import java.io.*;
+import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,22 +15,49 @@ import java.util.concurrent.TimeUnit;
  * Created by liubin on 2015-11-23.
  * localCache
  */
-public class LocalCache<K, V> {
+public class LocalCache<K, V> implements Serializable {
+    private static final long serialVersionUID = 4742575543754467445L;
+    //path of store path
+    private final static String STORE_FILE_PATH = "D:\\localCache";
+    //name of store file name
+    private final static String STORE_FILE_NAME = "localCache.txt";
     //the max size of cache
     private int MAX_SIZE = 10000;
+    //the cache core
     private Map<K, ValueEntry<V>> cache;
 
+    /**
+     * the construct of local cache with no param
+     */
     public LocalCache() {
         cache = new HashMap<>();
     }
 
+    /**
+     * the construct of local cache
+     *
+     * @param initialCapacity the initialCapacity for cache
+     */
     public LocalCache(int initialCapacity) {
         cache = new HashMap<>(initialCapacity);
     }
 
-    public LocalCache(int initialCapacity, int loadFactor, int size) {
+    /**
+     * the construct of local cache
+     *
+     * @param initialCapacity initial capacity - MUST be a power of two.
+     * @param loadFactor      The load factor for the hash table.
+     * @param maxSize         the max size of cache
+     * @param storeFilePath   the path of store file
+     * @throws LocalException if the store file path does not exist throw LocalException
+     */
+    public LocalCache(int initialCapacity, int loadFactor, int maxSize, String storeFilePath) throws LocalException {
         cache = new HashMap<>(initialCapacity, loadFactor);
-        MAX_SIZE = size;
+        MAX_SIZE = maxSize;
+        File file = new File(storeFilePath);
+        if (!file.exists()) {
+            throw new LocalException("store file does not exsit. the storeFilePath is " + storeFilePath);
+        }
     }
 
     /**
@@ -161,7 +191,7 @@ public class LocalCache<K, V> {
     }
 
     /**
-     * cleaning expired value in cache
+     * Cleaning expired value in cache
      */
     public void cleanExpiredValue() {
         Iterator iterator = cache.entrySet().iterator();
@@ -174,6 +204,40 @@ public class LocalCache<K, V> {
         }
         System.out.println("size : " + cache.size());
     }
+
+    /**
+     * Save into temp file
+     */
+    public static boolean save(LocalCache cache) throws LocalException, IOException {
+        Gson gson = new Gson();
+        String storeFile = STORE_FILE_PATH + "/" + STORE_FILE_NAME;
+        File file = new File(storeFile);
+        FileOutputStream fos = new FileOutputStream(file);
+        String json = gson.toJson(cache, LocalCache.class);
+        byte[] data = json.getBytes("UTF-8");
+        fos.write(data);
+        fos.close();
+        return true;
+    }
+
+    /**
+     * Reads from file
+     */
+    public static LocalCache read(Type type) throws IOException {
+        Gson gson = new Gson();
+        String storeFile = STORE_FILE_PATH + "/" +STORE_FILE_NAME;
+        File file = new File(storeFile);
+        Reader reader = new InputStreamReader(new FileInputStream(file));
+        String json = "";
+        int ch;
+
+        while ((ch = reader.read()) != -1) {
+            json = json + (char) ch;
+        }
+        reader.close();
+        return gson.fromJson(json, type);
+    }
+
 
     /**
      * The Value Struct contains expiredTime and value
