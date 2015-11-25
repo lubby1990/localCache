@@ -55,7 +55,7 @@ public class Test {
 
 
         LocalCache<String, String> localCache = new LocalCache<String, String>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             localCache.setValue(String.valueOf(i), "value" + i);
         }
         try {
@@ -69,7 +69,7 @@ public class Test {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             System.out.println( localCache.getValue(String.valueOf(i)));
         }
     }
